@@ -6,7 +6,7 @@ const cors = require("cors");
 require("dotenv").config();
 
 const connectDB = require("./config/database");
-const { generateMockData } = require("./utils/dataMock");
+const { generateMockData } = require("./utils/generateMockData");
 const { saveData } = require("./services/dataService");
 const dataRoutes = require("./routes/dataRoutes");
 
@@ -28,13 +28,23 @@ io.on("connection", (socket) => {
   console.log("Client connected");
 });
 
-// Mock Data Generation and Broadcasting
-cron.schedule("*/5 * * * * *", async () => {
+// Cron job logic
+async function handleCronJob() {
   const mockData = generateMockData();
   await saveData(mockData);
   io.emit("new-data", mockData);
-});
+}
+
+// Mock Data Generation and Broadcasting
+const job = cron.schedule("*/5 * * * * *", handleCronJob);
 
 // Start Server
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+// For testing
+module.exports = {
+  handleCronJob,
+  server,
+  job,
+};
